@@ -1,4 +1,4 @@
-# 🌍 RemitFlow — Cross-Border Payment Simulator
+# 🌍 RemitFlow - Cross-Border Payment Simulator
 
 RemitFlow is a full-stack fintech sandbox designed to simulate real-world international money transfers.  
 It models the **complete financial flow** used by remittance, banking, and payment systems:
