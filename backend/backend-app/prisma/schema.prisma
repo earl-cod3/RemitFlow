@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+
+  wallets           Wallet[]
+  transfersSent     Transfer[] @relation("TransfersSent")
+  transfersReceived Transfer[] @relation("TransfersReceived")
+}
+
+model Currency {
+  code   String @id // "ZAR", "KES"
+  name   String
+  symbol String // "R", "KSh"
+
+  wallets Wallet[]
+}
+
+model Wallet {
+  id           String   @id @default(cuid())
+  user         User     @relation(fields: [userId], references: [id])
+  userId       String
+  currency     Currency @relation(fields: [currencyCode], references: [code])
+  currencyCode String
+  balance      Decimal  @default(0.0)
+
+  createdAt DateTime @default(now())
+
+  // 🔹 Back-relations for transfers:
+  outgoingTransfers Transfer[] @relation("FromWallet")
+  incomingTransfers Transfer[] @relation("ToWallet")
+}
+
+model FxRate {
+  id            String   @id @default(cuid())
+  baseCurrency  String
+  quoteCurrency String
+  rate          Decimal
+  createdAt     DateTime @default(now())
+}
+
+model Transfer {
+  id        String @id @default(cuid())
+  reference String @unique
+
+  sender   User   @relation("TransfersSent", fields: [senderId], references: [id])
+  senderId String
+
+  recipient   User   @relation("TransfersReceived", fields: [recipientId], references: [id])
+  recipientId String
+
+  fromWallet   Wallet @relation("FromWallet", fields: [fromWalletId], references: [id])
+  fromWalletId String
+
+  toWallet   Wallet @relation("ToWallet", fields: [toWalletId], references: [id])
+  toWalletId String
+
+  fromAmount Decimal
+  toAmount   Decimal
+  fxRateUsed Decimal
+  feeAmount  Decimal
+
+  status           TransferStatus    @default(PENDING)
+  complianceStatus ComplianceStatus?
+  complianceScore  Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TransferStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  REJECTED
+}
+
+enum ComplianceStatus {
+  PASS
+  REVIEW
+  REJECT
+}
